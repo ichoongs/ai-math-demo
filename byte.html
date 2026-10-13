@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나이스 바이트 계산기</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#1f2328;--sub:#5b6270;--line:#e3e0d8;--accent:#2b5fb4;--ok:#1f7a5a;--bad:#c2410c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181b;--card:#202226;--ink:#e8e8ea;--sub:#a3a8b3;--line:#33363c;--accent:#7aa6f0;--ok:#4cc495;--bad:#f08a5d}}
+:root[data-theme="dark"]{--bg:#17181b;--card:#202226;--ink:#e8e8ea;--sub:#a3a8b3;--line:#33363c;--accent:#7aa6f0;--ok:#4cc495;--bad:#f08a5d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.35rem;margin:0}
+.sub{color:var(--sub);margin:6px 0 16px;font-size:.92rem}
+.seg{display:flex;gap:8px;margin-bottom:10px}
+.seg button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:5px 14px;cursor:pointer}
+.seg button.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+textarea{width:100%;min-height:220px;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);resize:vertical}
+.out{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.out div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.out b{display:block;font-size:1.35rem}
+.out span{font-size:.8rem;color:var(--sub)}
+.meter{height:8px;border-radius:99px;background:var(--line);margin-top:12px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--ok)}
+.over .meter i{background:var(--bad)} .over #left{color:var(--bad)}
+.foot{color:var(--sub);font-size:.82rem;margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>나이스 바이트 계산기</h1>
+<p class="sub">세특 문장을 붙여 넣으면 바로 계산합니다. 입력한 글은 이 화면 밖으로 전송되지 않습니다.</p>
+<div class="seg"><button type="button" class="on" data-lim="1500">교과세특·창체 1500</button><button type="button" data-lim="900">행특 900</button></div>
+<textarea id="t" placeholder="여기에 세특 문장을 붙여 넣으세요."></textarea>
+<div id="box"><div class="out"><div><b id="ch">0</b><span>글자</span></div><div><b id="by">0</b><span>byte</span></div><div><b id="left">1500</b><span>잔여 byte</span></div></div>
+<div class="meter"><i id="bar"></i></div></div>
+<p class="foot">계산 기준: 한글 3byte, 영문·숫자·특수문자·공백 1byte, 줄바꿈 2byte (연수 세특 템플릿 기준). 학교에서 쓰는 기준과 다르면 그 기준을 따르세요.</p>
+</main>
+<script>
+var lim=1500,t=document.getElementById('t');
+function nb(s){var b=0;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i),ch=s[i];
+ if(ch==='\n')b+=2;else if((c>=0xAC00&&c<=0xD7A3)||(c>=0x1100&&c<=0x11FF)||(c>=0x3130&&c<=0x318F))b+=3;else if(c>=0xDC00&&c<=0xDFFF)b+=0;else b+=1;}return b;}
+function up(){var s=t.value.replace(/\r\n/g,'\n'),b=nb(s);
+ document.getElementById('ch').textContent=Array.from(s).length;document.getElementById('by').textContent=b;
+ document.getElementById('left').textContent=lim-b;document.getElementById('bar').style.width=Math.min(100,b/lim*100)+'%';
+ document.getElementById('box').className=b>lim?'over':'';}
+t.addEventListener('input',up);
+document.querySelectorAll('.seg button').forEach(function(x){x.addEventListener('click',function(){
+ document.querySelectorAll('.seg button').forEach(function(y){y.classList.remove('on')});x.classList.add('on');lim=+x.dataset.lim;up();})});
+</script>
+</body>
+</html>

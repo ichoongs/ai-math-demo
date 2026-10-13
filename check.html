@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 오류 찾기 미션</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1d2330;--sub:#5d6678;--line:#dfe3ec;--ok:#1f7a5a;--bad:#c2410c;--accent:#8a4fbf;--ai:#eef1f8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181e;--card:#1f232b;--ink:#e9ebf0;--sub:#a1a9b8;--line:#323844;--ok:#4cc495;--bad:#f08a5d;--accent:#c193ec;--ai:#272c36}}
+:root[data-theme="dark"]{--bg:#15181e;--card:#1f232b;--ink:#e9ebf0;--sub:#a1a9b8;--line:#323844;--ok:#4cc495;--bad:#f08a5d;--accent:#c193ec;--ai:#272c36}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 120px}
+h1{font-size:1.35rem;margin:0}
+.sub{color:var(--sub);margin:6px 0 18px;font-size:.95rem}
+.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.q p{margin:0 0 10px}
+.n{color:var(--accent);font-weight:700;margin-right:6px}
+.ai{background:var(--ai);border-radius:10px;padding:10px 12px;font-size:.95rem;margin-bottom:12px}
+.ai b{color:var(--accent)}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;font:inherit;font-weight:700;padding:10px 0;border-radius:10px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.btns button.pick.good{border-color:var(--ok);color:var(--ok)}
+.btns button.pick.bad{border-color:var(--bad);color:var(--bad)}
+.why{display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:.95rem}
+.show .why{display:block}
+.why.wrong{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.why.right{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px}
+.bar div{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.bar button{white-space:nowrap;font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 16px;background:var(--accent);color:#fff;cursor:pointer}
+.bar button:disabled{opacity:.4;cursor:default}
+#result{font-size:.95rem}
+</style>
+</head>
+<body>
+<main>
+<h1>AI 오류 찾기 미션</h1>
+<p class="sub">AI가 만든 퀴즈의 <b>정답과 해설</b>입니다. 이 중 <b>2개가 틀렸습니다.</b> 문항마다 AI 정답이 맞는지 판정해 보세요.</p>
+<div id="list"></div>
+</main>
+<div class="bar"><div><span id="result">0 / 5 판정</span><button id="reveal" type="button" disabled>결과 보기</button></div></div>
+<script>
+var Q=[
+ {t:"f′(a) = 0이면 함수 f(x)는 x = a에서 반드시 극값을 갖는다.",ai:"O",ae:"접선의 기울기가 0인 점에서 그래프가 꺾이므로 극값을 갖습니다.",wrong:true,
+  why:"<b>AI 오류.</b> 정답은 X입니다. f(x) = x³은 f′(0) = 0이지만 계속 증가하므로 극값이 없습니다. 그럴듯한 해설이 붙어 있어도 반례 하나로 무너집니다."},
+ {t:"미분가능한 함수 f(x)가 x = a에서 극값을 가지면 f′(a) = 0이다.",ai:"O",ae:"미분가능한 함수가 극값을 갖는 점에서는 접선의 기울기가 0입니다.",wrong:false,
+  why:"AI 정답이 맞습니다."},
+ {t:"f(x) = x³ − 3x의 극댓값은 2이다.",ai:"O",ae:"f′(x) = 3x² − 3 = 0에서 x = −1, 1이고, x = −1에서 극대이며 f(−1) = 2입니다.",wrong:false,
+  why:"AI 정답이 맞습니다. 계산까지 직접 확인해 보셨나요?"},
+ {t:"f(x) = |x|는 x = 0에서 미분가능하지 않으므로 극값을 갖지 않는다.",ai:"O",ae:"극값은 f′(a) = 0인 점에서 생기는데, x = 0에서는 미분계수가 없으므로 극값이 아닙니다.",wrong:true,
+  why:"<b>AI 오류.</b> 정답은 X입니다. 0을 포함하는 열린구간에서 f(x) ≥ f(0)이므로 x = 0에서 극솟값 0을 갖습니다. 극값의 정의에는 미분가능성이 필요 없습니다. 교과서 정의와 다른 '흔한 오개념'을 AI도 그대로 따라 합니다."},
+ {t:"한 함수에서 극댓값이 극솟값보다 작을 수도 있다.",ai:"O",ae:"극대·극소는 그 주변과 비교한 값이므로, 앞쪽의 극댓값이 뒤쪽의 극솟값보다 작을 수 있습니다.",wrong:false,
+  why:"AI 정답이 맞습니다."}
+];
+var pick={},list=document.getElementById('list'),rv=document.getElementById('reveal'),res=document.getElementById('result');
+Q.forEach(function(q,i){
+ var d=document.createElement('section');d.className='q';
+ d.innerHTML='<p><span class="n">'+(i+1)+'</span>'+q.t+'</p><div class="ai"><b>AI 정답: '+q.ai+'</b><br>'+q.ae+'</div><div class="btns"><button type="button" data-v="0" class="good">AI가 맞음</button><button type="button" data-v="1" class="bad">AI가 틀림</button></div><div class="why '+(q.wrong?'wrong':'right')+'">'+q.why+'</div>';
+ d.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){
+  if(rv.dataset.done)return;
+  d.querySelectorAll('button').forEach(function(x){x.classList.remove('pick')});b.classList.add('pick');
+  pick[i]=b.dataset.v==='1';var n=Object.keys(pick).length;res.textContent=n+' / 5 판정';rv.disabled=n<5;
+ })});
+ list.appendChild(d);
+});
+rv.addEventListener('click',function(){
+ rv.dataset.done=1;rv.disabled=true;var found=0,ok=0;
+ document.querySelectorAll('.q').forEach(function(d,i){d.classList.add('show');if(Q[i].wrong&&pick[i])found++;if(pick[i]===Q[i].wrong)ok++;});
+ res.innerHTML='<b>AI 오류 2개 중 '+found+'개 발견</b> · 판정 '+ok+'/5 정확';
+ window.scrollTo({top:0,behavior:'smooth'});
+});
+</script>
+</body>
+</html>

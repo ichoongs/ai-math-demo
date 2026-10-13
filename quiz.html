@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>극대와 극소 OX 퀴즈</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1d2330;--sub:#5d6678;--line:#dfe3ec;--o:#1f7a5a;--x:#c2410c;--accent:#2b5fb4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181e;--card:#1f232b;--ink:#e9ebf0;--sub:#a1a9b8;--line:#323844;--o:#4cc495;--x:#f08a5d;--accent:#7aa6f0}}
+:root[data-theme="dark"]{--bg:#15181e;--card:#1f232b;--ink:#e9ebf0;--sub:#a1a9b8;--line:#323844;--o:#4cc495;--x:#f08a5d;--accent:#7aa6f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.4rem;margin:0}
+.sub{color:var(--sub);margin:4px 0 20px;font-size:.95rem}
+.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.q p{margin:0 0 12px}
+.n{color:var(--accent);font-weight:700;margin-right:6px}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;font:inherit;font-size:1.3rem;font-weight:700;padding:10px 0;border-radius:10px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.btns button:disabled{cursor:default;opacity:.55}
+.btns button.pick{opacity:1;border-color:currentColor}
+.btns .O.pick{color:var(--o)} .btns .X.pick{color:var(--x)}
+.fb{display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:.95rem}
+.fb.ok{display:block;background:color-mix(in srgb,var(--o) 14%,transparent)}
+.fb.no{display:block;background:color-mix(in srgb,var(--x) 14%,transparent)}
+.score{position:sticky;bottom:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:18px;display:flex;justify-content:space-between;align-items:center}
+.score button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:4px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>극대와 극소 OX 퀴즈</h1>
+<p class="sub">미적분Ⅰ · Ⅲ-03 함수의 극대와 극소 · 5문항</p>
+<div id="list"></div>
+<div class="score"><span id="score">0 / 5 풀이 · 0점</span><button id="reset" type="button">다시 풀기</button></div>
+</main>
+<script>
+var Q=[
+ {t:"f′(a) = 0이면 함수 f(x)는 x = a에서 반드시 극값을 갖는다.",a:"X",e:"f(x) = x³은 f′(0) = 0이지만 x = 0의 좌우에서 계속 증가하므로 극값이 없습니다. f′(a) = 0은 극값의 필요조건일 뿐입니다."},
+ {t:"미분가능한 함수 f(x)가 x = a에서 극값을 가지면 f′(a) = 0이다.",a:"O",e:"미분가능한 함수가 극값을 갖는 점에서는 접선의 기울기가 0이어야 합니다."},
+ {t:"미분가능한 함수 f(x)에서 x = a의 좌우로 f′(x)의 부호가 양에서 음으로 바뀌면, f(x)는 x = a에서 극대이다.",a:"O",e:"증가하다가 감소로 바뀌는 지점이므로 그 근처에서 가장 큰 값, 즉 극댓값을 갖습니다."},
+ {t:"한 함수에서 극댓값은 항상 극솟값보다 크다.",a:"X",e:"극대·극소는 '그 주변'과 비교한 것입니다. 계단처럼 올라가는 그래프에서는 앞쪽의 극댓값이 뒤쪽의 극솟값보다 작을 수 있습니다."},
+ {t:"함수 f(x) = |x|는 x = 0에서 극솟값 0을 갖는다.",a:"O",e:"x = 0에서 미분가능하지 않지만, 0을 포함하는 열린구간에서 f(x) ≥ f(0)이므로 극소입니다. 극값은 미분가능성과 상관없이 정의됩니다."}
+];
+var done={},right=0,list=document.getElementById('list');
+function render(){
+ list.innerHTML='';done={};right=0;
+ Q.forEach(function(q,i){
+  var d=document.createElement('section');d.className='q';
+  d.innerHTML='<p><span class="n">'+(i+1)+'</span>'+q.t+'</p><div class="btns"><button class="O" type="button">O</button><button class="X" type="button">X</button></div><div class="fb" role="status"></div>';
+  d.querySelectorAll('button').forEach(function(b){
+   b.addEventListener('click',function(){
+    if(done[i])return;done[i]=1;
+    var pick=b.textContent,ok=pick===q.a;if(ok)right++;
+    b.classList.add('pick');d.querySelectorAll('button').forEach(function(x){x.disabled=true});
+    var fb=d.querySelector('.fb');fb.className='fb '+(ok?'ok':'no');
+    fb.innerHTML='<b>'+(ok?'정답!':'아쉬워요. 정답은 '+q.a)+'</b><br>'+q.e;
+    update();
+   });
+  });
+  list.appendChild(d);
+ });
+ update();
+}
+function update(){var n=Object.keys(done).length;document.getElementById('score').textContent=n+' / '+Q.length+' 풀이 · '+right+'점';}
+document.getElementById('reset').addEventListener('click',render);
+render();
+</script>
+</body>
+</html>
